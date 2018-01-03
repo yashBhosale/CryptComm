@@ -8,19 +8,18 @@ import Queues
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-dataBase = sqlite3.connect('users.db')
-db = dataBase.cursor()
+# dataBase = sqlite3.connect('users.db')
+# db = dataBase.cursor()
+
+# There's going to be some TLS here, but cross that bridge once you get to it, I suppose.
 
 # Bind socket to self
-server_address = (sock.gethostname(), 80)
+server_address = ('localhost', 80)
 
 print >>sys.stderr, 'starting up on %s port %s' % server_address 
 
 sock.bind(server_address)
 sock.listen(5)
-
-
-#we need to check for stuff like 
 
 ###############################################################
 
@@ -32,35 +31,41 @@ while inputs:
 readable, writable, error = select(inputs, outputs, inputs)
 
 	for s in readable:
-		if s is server #this means there's a new connection
+		if s is sock 
+			#this means there's a new connection
 
 			connection, client_address = sock.accept()
-			#I think this is where initial authentication goes
-
 			connection.setblocking(0)
 			
-			if usercheck(db, connection) is True:
-				inputs.append(connection)
-				messageQueues[connection] = Queues.queue()
+			# if usercheck(db, connection) is True:
+			inputs.append(connection)
+			messageQueues[connection] = Queues.queue()
 		
 
 		else:
 			data = connection.recv(64)
 			if data:
+				# accept their data, put them in the output list if
+				# they're not already there, and put that message 
+				# in every client's message queue
+				
 				if s not in outputs
 					outputs.append(s)
-				for clients in messageQueues
+				for client in messageQueues
 					messageQueues[client].put(data)
 			else:
+				# a readable socket with no data is an empty connection.
+				# remove them both from outputs and inputs
+				
 				if s in outputs
 					outputs.remove(s)
-					inputs.remove(s)
-					s.close()
+				inputs.remove(s)
+				s.close()
 
 	for w in writable:
 		try:
 			nextMsg = messageQueues[w].get_nowait()
-		except: Queue.Empty:
+		except Queue.Empty:
 			print >>sys.stderr 'output queue for', w.getpeername(), 'is empty'
 			outputs.remove(w)
 		else: 
@@ -73,26 +78,26 @@ readable, writable, error = select(inputs, outputs, inputs)
 
 		if e in outputs:
 			outputs.remove(e)
-		s.close()
+		e.close()
 
 		del messageQueues[e]
 
-def usercheck(db, connection):
+#def usercheck(db, connection):
 
-	#SANITIZE THESE
-	connection.send('Please input a username')
-	user = connection.recv(64)
+#	#SANITIZE THESE
+#	connection.send('Please input a username')
+#	user = connection.recv(64)
 
-	connection.send('Please input  password')
-	password = connection.recv(64)
-	sanitized = (password,)
+#	connection.send('Please input  password')
+#	password = connection.recv(64)
+#	sanitized = (password,)
 
 	#hashing stuff
-	db.execute("SELECT password FROM users WHERE username=?", sanitized)
-	check = db.fetchone()
+#	db.execute("SELECT password FROM users WHERE username=?", sanitized)
+#	check = db.fetchone()
 
-	if password == check:
-		return True
-	else:
-		return False
+#	if password == check:
+#		return True
+#	else:
+#		return False
 
