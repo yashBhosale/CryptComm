@@ -18,8 +18,29 @@ except:
 print'Connected to remote host. You can start sending messages now.'
 
 while 1:
+  # writable and exceptional don't have any corresponding variables because
+  # there's only one place to write to
   inputs = [sys.stdin, sock] 
   readable, writable, exceptional = select.select(inputs, [], [])
+
+  for r in readable:
+
+	if r == sys.stdin
+		# user typed in a message
+		msg = sys.stdin.readline()
+		sock.send(msg)
+	else if r == sock
+		data = sock.recv(4096)
+		if not data :
+			# means the server disconnected
+			print '\nDisconnected from chat server'
+			sys.exit()
+		else :
+			#user entered a message
+			sys.stdout.write(data)
+			sys.stdout.write('You >')
+			sys.stdout.flush()
+
   
 
 closeConnection = ('seshclose')
