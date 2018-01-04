@@ -27,7 +27,7 @@ sock.listen(5)
 inputs = [ sock ]
 messageQueues = {}
 
-while inputs:
+while true:
 readable, writable, error = select(inputs, outputs, inputs)
 
 	for s in readable:
