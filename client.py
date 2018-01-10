@@ -6,7 +6,7 @@ import select
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect the socket to the port on the server given by the caller
-server_address = ('192.168.0.3', 10000)
+server_address = ('localhost', 10000)
 print >>sys.stderr, 'connecting to %s port %s' % server_address
 
 try: 
@@ -24,12 +24,11 @@ while 1:
   readable, writable, exceptional = select.select(inputs, [], [])
 
   for r in readable:
-
-	if r == sys.stdin
+	if r == sys.stdin:
 		# user typed in a message
 		msg = sys.stdin.readline()
 		sock.send(msg)
-	else if r == sock
+	elif r == sock :
 		data = sock.recv(4096)
 		if not data :
 			# means the server disconnected
@@ -41,4 +40,6 @@ while 1:
 			sys.stdout.write('You >')
 			sys.stdout.flush()
 
-  
+
+
+
