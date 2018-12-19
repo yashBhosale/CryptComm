@@ -36,7 +36,7 @@ while 1:
 			sys.exit()
 		else :
 			#user entered a message
-			sys.stdout.write(data)
+			sys.stdout.write(str(data))
 			sys.stdout.write('You >')
 			sys.stdout.flush()
 
