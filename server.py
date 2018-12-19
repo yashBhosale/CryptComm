@@ -5,8 +5,10 @@ import sqlite3
 import queue
 import bcrypt
 
+
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 dataBase = sqlite3.connect('users.db')
 db = dataBase.cursor()
 
@@ -30,38 +32,34 @@ while inputs:
 
 	for s in readable:
 		if s is sock: 
-			#this means there's a new connection
-
+			# this means there's a new connection
 			connection, client_address = sock.accept()
+
 			# connection.setblocking(0)
-			
-			# if usercheck(db, connection) is True:
 			inputs.append(connection)
-			messageQueues[connection] = Queue.Queue()
-			connection.send('Hello and welcome to my server!\n')
-			connection.send('Please enter your username. \n>')
-			
-			#preferably put all of authentication in its own function
-			connection.send("please enter your username:\n")
-			username = connection.recv(64)
-			data = 'your username was ' + username
+			messageQueues[connection] = queue.Queue()
+			connection.send(b'Hello and welcome to my server!\n')
+
+			# preferably put all of authentication in its own function
+			connection.send(b"please enter your username:\n")
+			username = connection.recv(64) 
+			data = b'your username was ' + bytes(username) 
 			connection.send(data)
 
-			connection.send("please enter your password:\n")
+			connection.send(b"please enter your password:\n")
 			password = connection.recv(64)
-			connection.send("password recieved")
-
-			# hash the password and store it in the database - hopefully in another function/thread
-			
-			#
-			# db.execute('SELECT Password FROM Users WHERE Username = ? ', hashed)
+			connection.send(b"password recieved\n")
+			# compare the password to the hash - hopefully in another function/thread
+			# 
+			# db.execute('SELECT Password FROM Users WHERE Username = ? ', username)
 			# hashed = db.fetchone()
+			#
 			# if bcrypt.checkpw(password, hashed):
 			# 	connection.send("user authenticated!")
 			# else:
 			# 	connection.send("please reconnect")
 			#	inputs.remove(connection)
-			#	connection.close
+			#	connection.close()
 
 		else:
 			data = connection.recv(64)
@@ -69,7 +67,6 @@ while inputs:
 				# accept their data, put them in the output list if
 				# they're not already there, and put that message 
 				# in every client's message queue
-				
 				if s not in outputs:
 					outputs.append(s)
 				for client in messageQueues:
@@ -77,24 +74,27 @@ while inputs:
 			else:
 				# a readable socket with no data is an empty connection.
 				# remove them both from outputs and inputs
-				
 				if s in outputs:
 					outputs.remove(s)
 				inputs.remove(s)
 				s.close()
-
+	# figure out how this works
 	for w in writable:
+		# i think the .get_nowait() just means push everything??
 		try:
 			nextMsg = messageQueues[w].get_nowait()
-		except Queue.Empty:
-			print("output queue for ", w.getpeername(), " is empty")
+		except queue.Empty:
+			print(b"output queue for ", w.getpeername(), " is empty")
 			outputs.remove(w)
-		else: 
-			print("sending {} to {}".format(nextMsg, w.getpeername()))
-			w.send(nextMsg)
+		else:
+
+			for i in inputs:
+				if i is not sock:
+					print("sending {} to {}".format(nextMsg, i.getpeername()))
+					i.send(nextMsg)
 
 	for e in exceptional:
-		print("handling exceptional condition for {}".format(s.getpeername()))
+		print(b"handling exceptional condition for {}".format(s.getpeername()))
 		inputs.remove(e)
 
 		if e in outputs:
